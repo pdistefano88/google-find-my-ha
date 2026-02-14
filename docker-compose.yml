@@ -1,0 +1,13 @@
+services:
+  google-find-my-ha:
+    image: google-find-my-ha:latest
+    container_name: google-find-my-ha
+    env_file:
+      - .env
+    environment:
+      PUID: 100000
+      PGID: 101000
+      TZ: Europe/London
+    volumes:
+      - ./secrets.json:/var/secrets.json
+    restart: unless-stopped
