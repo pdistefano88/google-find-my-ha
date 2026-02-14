@@ -2,7 +2,7 @@
 /DynamicAnalysis
 /.idea
 /DULT/OwnerLookup/Results
-/Auth/secrets.json
+/google_find_my_ha/Auth/secrets.json
 /example_data.json
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,xcode,swift,swiftpackagemanager,objective-c
