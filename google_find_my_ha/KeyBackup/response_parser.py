@@ -6,12 +6,12 @@
 import json
 
 
-def _transform_to_byte_array(json_object):
+def _transform_to_byte_array(json_object) -> bytearray:
     byte_array = bytearray(json_object[str(i)] for i in range(len(json_object)))
     return byte_array
 
 
-def get_fmdn_shared_key(vault_keys):
+def get_fmdn_shared_key(vault_keys) -> bytearray:
     json_object = json.loads(vault_keys)
     processed_data = {}
 

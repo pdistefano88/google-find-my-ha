@@ -5,11 +5,12 @@
 
 import json
 import os
+from typing import Callable
 
 SECRETS_FILE = 'secrets.json'
 
 
-def get_cached_value_or_set(name: str, generator: callable):
+def get_cached_value_or_set(name: str, generator: Callable[[], str]) -> str:
     existing_value = get_cached_value(name)
 
     if existing_value is not None:
@@ -20,7 +21,7 @@ def get_cached_value_or_set(name: str, generator: callable):
     return value
 
 
-def get_cached_value(name: str):
+def get_cached_value(name: str) -> str | None:
     secrets_file = _get_secrets_file()
 
     if os.path.exists(secrets_file):
@@ -35,7 +36,7 @@ def get_cached_value(name: str):
     return None
 
 
-def set_cached_value(name: str, value: str):
+def set_cached_value(name: str, value: str) -> None:
     secrets_file = _get_secrets_file()
 
     if os.path.exists(secrets_file):
@@ -51,6 +52,6 @@ def set_cached_value(name: str, value: str):
         json.dump(data, file)
 
 
-def _get_secrets_file():
+def _get_secrets_file() -> str:
     secrets_dir = os.getenv("SECRETS_DIR", ".")
     return os.path.join(secrets_dir, SECRETS_FILE)

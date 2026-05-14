@@ -11,7 +11,7 @@ from google_find_my_ha.KeyBackup.shared_key_request import get_security_domain_r
 from chrome_driver import create_driver
 
 
-def request_shared_key_flow():
+def request_shared_key_flow() -> str | None:
     driver = create_driver()
     try:
         # Open Google accounts sign-in page

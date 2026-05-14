@@ -4,5 +4,5 @@
 #
 
 
-def ascii_to_bytes(string):
+def ascii_to_bytes(string) -> bytes:
     return string.encode('ascii')

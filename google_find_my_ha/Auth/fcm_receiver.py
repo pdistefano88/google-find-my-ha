@@ -3,25 +3,27 @@ import base64
 import binascii
 import logging
 
-from google_find_my_ha.Auth.firebase_messaging import FcmRegisterConfig, FcmPushClient
-from google_find_my_ha.Auth.token_cache import set_cached_value, get_cached_value
+from firebase_messaging import FcmPushClient, FcmRegisterConfig
+
+from google_find_my_ha.Auth.token_cache import get_cached_value, set_cached_value
 
 logger = logging.getLogger(__name__)
+
 
 class FcmReceiver:
     _instance = None
     _listening = False
-    
+
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(FcmReceiver, cls).__new__(cls)
         return cls._instance
-    
+
     def __init__(self):
-        if hasattr(self, '_initialized') and self._initialized:
+        if hasattr(self, "_initialized") and self._initialized:
             return
         self._initialized = True
-        
+
         # Define Firebase project configuration
         project_id = "google.com:api-project-289722593072"
         app_id = "1:289722593072:android:3cfcf5bc359f0308"
@@ -34,9 +36,14 @@ class FcmReceiver:
             messaging_sender_id=message_sender_id,
             bundle_id="com.google.android.apps.adm",
         )
-        self.credentials = get_cached_value('fcm_credentials')
+        self.credentials = get_cached_value("fcm_credentials")
         self.location_update_callbacks = []
-        self.pc = FcmPushClient(self._on_notification, fcm_config, self.credentials, self._on_credentials_updated)
+        self.pc = FcmPushClient(
+            self._on_notification,
+            fcm_config,
+            self.credentials,
+            self._on_credentials_updated,
+        )
         self.listen_task = None
         self.timeout_task = None
         self._listening = False
@@ -44,15 +51,15 @@ class FcmReceiver:
     @property
     def listening(self) -> bool:
         return self._listening
-    
+
     def register_for_location_updates(self, callback, timeout_seconds=60):
         self.location_update_callbacks.append(callback)
         if not self._listening:
             asyncio.get_event_loop().run_until_complete(
                 self._register_for_fcm_and_listen(timeout_seconds)
             )
-        return self.credentials['fcm']['registration']['token']
-    
+        return self.credentials["fcm"]["registration"]["token"]
+
     def stop_listening(self):
         if self.timeout_task and not self.timeout_task.done():
             self.timeout_task.cancel()
@@ -60,38 +67,36 @@ class FcmReceiver:
             self.listen_task.cancel()
         asyncio.get_event_loop().run_until_complete(self.pc.stop())
         self._listening = False
-    
+
     def get_android_id(self):
         if self.credentials is None:
-            return asyncio.run(
-                self._register_for_fcm_and_listen()
-            )
-        return self.credentials['gcm']['android_id']
-    
+            return asyncio.run(self._register_for_fcm_and_listen())
+        return self.credentials["gcm"]["android_id"]
+
     # Define a callback function for handling notifications
     def _on_notification(self, obj, notification, data_message):
         # Reset the timeout timer when we receive a notification
         if self.timeout_task and not self.timeout_task.done():
             self.timeout_task.cancel()
-        
+
         # Check if the payload is present
-        if 'data' in obj and 'com.google.android.apps.adm.FCM_PAYLOAD' in obj['data']:
+        if "data" in obj and "com.google.android.apps.adm.FCM_PAYLOAD" in obj["data"]:
             # Decode the base64 string
-            base64_string = obj['data']['com.google.android.apps.adm.FCM_PAYLOAD']
+            base64_string = obj["data"]["com.google.android.apps.adm.FCM_PAYLOAD"]
             decoded_bytes = base64.b64decode(base64_string)
             # Convert to hex string
-            hex_string = binascii.hexlify(decoded_bytes).decode('utf-8')
+            hex_string = binascii.hexlify(decoded_bytes).decode("utf-8")
             for callback in self.location_update_callbacks:
                 callback(hex_string)
         else:
             logger.error("[FCMReceiver] Payload not found in the notification.")
-    
+
     def _on_credentials_updated(self, creds):
         self.credentials = creds
         # Also store to disk
-        set_cached_value('fcm_credentials', self.credentials)
+        set_cached_value("fcm_credentials", self.credentials)
         logger.debug("[FCMReceiver] Credentials updated.")
-    
+
     async def _timeout_handler(self, timeout_seconds):
         try:
             await asyncio.sleep(timeout_seconds)
@@ -102,7 +107,7 @@ class FcmReceiver:
         except asyncio.CancelledError:
             # This is normal when a notification is received and the timeout is canceled
             pass
-    
+
     async def _register_for_fcm(self):
         fcm_token = None
         # Register or check in with FCM and get the FCM token
@@ -111,19 +116,26 @@ class FcmReceiver:
                 fcm_token = await self.pc.checkin_or_register()
             except Exception as e:
                 await self.pc.stop()
-                logger.error(f"[FCMReceiver] Failed to register with FCM: {str(e)}. Retrying...")
+                logger.error(
+                    f"[FCMReceiver] Failed to register with FCM: {str(e)}. Retrying..."
+                )
                 await asyncio.sleep(5)
-    
+
     async def _register_for_fcm_and_listen(self, timeout_seconds=60):
         await self._register_for_fcm()
-        
+
         self.listen_task = asyncio.create_task(self.pc.start())
         self._listening = True
-        logger.debug("[FCMReceiver] Listening for notifications. This can take a few seconds...")
-        
+        logger.debug(
+            "[FCMReceiver] Listening for notifications. This can take a few seconds..."
+        )
+
         # Set up the timeout
         if timeout_seconds > 0:
-            self.timeout_task = asyncio.create_task(self._timeout_handler(timeout_seconds))
+            self.timeout_task = asyncio.create_task(
+                self._timeout_handler(timeout_seconds)
+            )
+
 
 if __name__ == "__main__":
     receiver = FcmReceiver()
@@ -131,10 +143,11 @@ if __name__ == "__main__":
         # Example usage with a 30-second timeout
         def on_location_update(hex_data):
             print(f"Received location update: {hex_data[:20]}...")
-        
+
         receiver.register_for_location_updates(on_location_update, timeout_seconds=30)
         # Keep the main thread running
         asyncio.get_event_loop().run_forever()
     except KeyboardInterrupt:
         print("Stopping...")
         receiver.stop_listening()
+

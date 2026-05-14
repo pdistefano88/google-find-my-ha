@@ -9,7 +9,7 @@ from google_find_my_ha.NovaApi.util import generate_random_uuid
 from google_find_my_ha.ProtoDecoders import DeviceUpdate_pb2
 
 
-def get_security_domain_request_url():
+def get_security_domain_request_url() -> str:
     encryption_unlock_request_extras = DeviceUpdate_pb2.EncryptionUnlockRequestExtras()
     encryption_unlock_request_extras.operation = 1
     encryption_unlock_request_extras.securityDomain.name = "finder_hw"
