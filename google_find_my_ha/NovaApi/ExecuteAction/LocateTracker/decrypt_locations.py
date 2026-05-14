@@ -62,7 +62,7 @@ def retrieve_identity_key(device_registration: DeviceRegistration) -> bytes:
     try:
         identity_key = decrypt_eik(owner_key, encrypted_identity_key)
         return identity_key
-    except Exception as e:
+    except Exception:
         e2eeData = get_eid_info()
         current_owner_key_version = (
             e2eeData.encryptedOwnerKeyAndMetadata.ownerKeyVersion
@@ -72,12 +72,12 @@ def retrieve_identity_key(device_registration: DeviceRegistration) -> bytes:
             logger.exception(
                 f"Failed to decrypt E2EE data. This tracker was encrypted with owner key version {encrypted_user_secrets.ownerKeyVersion}, but the current owner key version is {current_owner_key_version}.\nThis happens if you reset your end-to-end-encrypted data in the past.\nThe tracker cannot be decrypted anymore, and it is recommended to remove it in the Find My Device app."
             )
-            raise e
+            raise
         else:
             logger.exception(
                 f"Failed to decrypt identity key encrypted with owner key version {encrypted_user_secrets.ownerKeyVersion}, current owner key version is {current_owner_key_version}.\nThis may happen if you reset your end-to-end-encrypted data. To resolve this issue, open the folder 'Auth' and delete the file 'secrets.json'."
             )
-            raise e
+            raise
 
 
 def decrypt_location_response_locations(

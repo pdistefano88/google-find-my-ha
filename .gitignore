@@ -189,3 +189,4 @@ venv/
 .env
 secrets.json
 
+lazygit*
