@@ -1,0 +1,4 @@
+# Code not reachable from publish_mqtt.py
+google_find_my_ha/Auth/firebase_messaging_broken/
+google_find_my_ha/FMDNCrypto/key_derivation.py
+google_find_my_ha/FMDNCrypto/sha.py
