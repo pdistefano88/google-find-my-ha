@@ -2,3 +2,15 @@
 google_find_my_ha/Auth/firebase_messaging_broken/
 google_find_my_ha/FMDNCrypto/key_derivation.py
 google_find_my_ha/FMDNCrypto/sha.py
+
+# Development and CI-only files
+.github/
+tests/
+.tox/
+.pytest_cache/
+.venv/
+__pycache__/
+*.pyc
+tox.ini
+uv.lock
+google_find_my_ha.egg-info/

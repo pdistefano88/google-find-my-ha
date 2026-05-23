@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # MQTT Configuration
 MQTT_BROKER = os.environ.get("MQTT_BROKER", "")
-MQTT_PORT = int(os.environ.get("MQTT_PORT", "1887"))
+MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
 MQTT_USERNAME = os.environ.get("MQTT_USERNAME")
 MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD")
 MQTT_CLIENT_ID = "google_find_my_publisher"
@@ -78,7 +78,8 @@ def publish_device_state(
 ) -> mqtt.MQTTMessageInfo:
     """Publish device state and attributes to MQTT"""
     base_topic = f"{DISCOVERY_PREFIX}/device_tracker/{DEVICE_PREFIX}_{canonic_id}"
-    home = str(location_data.get("semantic_location")).lower() == "home"
+    semantic_location = location_data.get("semantic_location")
+    home = str(semantic_location).lower() == "home"
 
     # Extract location data
     lat = location_data.get("latitude", HOME_LATITUDE if home else None)
@@ -86,6 +87,9 @@ def publish_device_state(
     accuracy = location_data.get("accuracy")
     altitude = location_data.get("altitude", HOME_ALTITUDE if home else None)
     timestamp = location_data.get("timestamp", time.time())
+
+    state = "not_home" if lat is not None and lon is not None else semantic_location or "not_home"
+    client.publish(f"{base_topic}/state", state)
 
     # Publish attributes
     attributes = {

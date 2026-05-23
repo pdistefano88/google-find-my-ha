@@ -23,7 +23,10 @@ def custom_message_formatter(message, indent, as_one_line):
             hex_value = binascii.hexlify(value).decode('utf-8')
             lines.append(f"{indent}{field.name}: \"{hex_value}\"")
         elif field.type == field.TYPE_MESSAGE:
-            if field.label == field.LABEL_REPEATED:
+            is_repeated = getattr(field, "is_repeated", None)
+            if is_repeated is None:
+                is_repeated = field.label == field.LABEL_REPEATED
+            if is_repeated:
                 for sub_message in value:
                     if field.message_type.name == "Time":
                         # Convert Unix time to human-readable format
