@@ -6,6 +6,7 @@ from time import sleep
 
 import paho.mqtt.client as mqtt
 
+from google_find_my_ha.Auth.fcm_receiver import FcmReceiver
 from google_find_my_ha.NovaApi.ExecuteAction.LocateTracker.decrypt_locations import (
     LocationData,
     SemanticData,
@@ -33,6 +34,9 @@ HOME_LONGITUDE = float(os.environ.get("HOME_LONGITUDE", "0"))
 HOME_ALTITUDE = float(os.environ.get("HOME_ALTITUDE", "0"))
 
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "60"))
+FCM_RECONNECT_FAILURE_THRESHOLD = int(
+    os.environ.get("FCM_RECONNECT_FAILURE_THRESHOLD", "5")
+)
 
 # Home Assistant MQTT Discovery
 DISCOVERY_PREFIX = "homeassistant"
@@ -96,6 +100,30 @@ def publish_device_state(
     return r
 
 
+def reconnect_fcm(reason: str) -> None:
+    logger.warning(f"Reconnecting FCM listener: {reason}")
+    try:
+        FcmReceiver().stop_listening()
+    except Exception:
+        logger.exception("Failed to reconnect FCM listener")
+
+
+def record_poll_failure(
+    failure_counts: dict[str, int], canonic_id: str, device_name: str, reason: str
+) -> None:
+    failure_counts[canonic_id] = failure_counts.get(canonic_id, 0) + 1
+
+    if FCM_RECONNECT_FAILURE_THRESHOLD <= 0:
+        return
+
+    if failure_counts[canonic_id] >= FCM_RECONNECT_FAILURE_THRESHOLD:
+        reconnect_fcm(
+            f"{device_name} had {failure_counts[canonic_id]} consecutive failed polls; latest was {reason}"
+        )
+        for device_id in failure_counts:
+            failure_counts[device_id] = 0
+
+
 def main():
     # Initialize MQTT client
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, MQTT_CLIENT_ID)
@@ -128,6 +156,8 @@ def main():
             "You may need to restart Home Assistant or trigger device discovery"
         )
 
+        failure_counts = {canonic_id: 0 for _, canonic_id in canonic_ids}
+
         while True:
             for device_name, canonic_id in canonic_ids:
                 try:
@@ -138,15 +168,22 @@ def main():
                         logger.info(
                             f"No location data available for {device_name}; keeping previous MQTT state"
                         )
+                        record_poll_failure(
+                            failure_counts, canonic_id, device_name, "empty-response"
+                        )
                         continue
 
                     msg_info = publish_device_state(client, canonic_id, location_data)
                     msg_info.wait_for_publish()
+                    failure_counts[canonic_id] = 0
 
                     logger.info(f"Published data for {device_name}")
                 except TimeoutError as e:
                     logger.warning(
                         f"No location response for {device_name}: {e}. Keeping previous MQTT state"
+                    )
+                    record_poll_failure(
+                        failure_counts, canonic_id, device_name, "timeout"
                     )
                 except Exception as e:
                     logger.exception(

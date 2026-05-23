@@ -65,6 +65,8 @@ class FcmReceiver:
             self.location_update_callbacks.remove(callback)
 
     def stop_listening(self):
+        if not self._listening:
+            return
         if self.timeout_task and not self.timeout_task.done():
             self.timeout_task.cancel()
         if self.listen_task and not self.listen_task.done():

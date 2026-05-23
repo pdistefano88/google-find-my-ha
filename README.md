@@ -15,6 +15,7 @@ Describe how to get Auth
 - MQTT_USERNAME: MQTT username
 - MQTT_PASSWORD: MQTT password
 - POLL_INTERVAL: Poll interval in seconds. Location data will be pulled accordingly.
+- FCM_RECONNECT_FAILURE_THRESHOLD: Reconnect the FCM listener after this many consecutive empty/timeout polls for one device. Defaults to 5. Set to 0 to disable.
 - LOG_LEVEL: Log level, defaults to INFO
 
 It includes a new script, publish_mqtt.py that will publish the location of all your devices to an MQTT broker. These devices are then discoverable by home assistant and you can display them on a map, make automations etc.
