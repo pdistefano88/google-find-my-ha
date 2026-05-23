@@ -2,13 +2,13 @@ import types
 
 import pytest
 
-from google_find_my_ha.ProtoDecoders import Common_pb2, DeviceUpdate_pb2
-from google_find_my_ha.SpotApi import spot_request
-from google_find_my_ha.SpotApi.GetEidInfoForE2eeDevices import (
+from google_find_my_ha.proto_decoders import common_pb2, device_update_pb2
+from google_find_my_ha.spot_api import spot_request
+from google_find_my_ha.spot_api.get_eid_info_for_e2ee_devices import (
     get_eid_info_request,
     get_owner_key,
 )
-from google_find_my_ha.SpotApi.grpc_parser import GrpcParser
+from google_find_my_ha.spot_api.grpc_parser import GrpcParser
 
 
 def test_grpc_construct_extract_roundtrip_and_invalid_inputs():
@@ -74,20 +74,20 @@ def test_spot_request_error_returns_empty_and_prints(monkeypatch, capsys):
 
 
 def test_get_eid_info_request_serializes_request_and_parses_response(monkeypatch):
-    response = DeviceUpdate_pb2.GetEidInfoForE2eeDevicesResponse()
+    response = device_update_pb2.GetEidInfoForE2eeDevicesResponse()
     response.encryptedOwnerKeyAndMetadata.ownerKeyVersion = 7
     captured = {}
 
     def fake_spot(scope, payload):
         captured["scope"] = scope
-        request = Common_pb2.GetEidInfoForE2eeDevicesRequest()
+        request = common_pb2.GetEidInfoForE2eeDevicesRequest()
         request.ParseFromString(payload)
         captured["request"] = request
         return response.SerializeToString()
 
     monkeypatch.setattr(get_eid_info_request, "spot_request", fake_spot)
     assert get_eid_info_request.get_eid_info() == response
-    assert captured["scope"] == "GetEidInfoForE2eeDevices"
+    assert captured["scope"] == "get_eid_info_for_e2ee_devices"
     assert captured["request"].ownerKeyVersion == -1
     assert captured["request"].hasOwnerKeyVersion is True
 

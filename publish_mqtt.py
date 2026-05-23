@@ -6,16 +6,16 @@ from time import sleep
 
 import paho.mqtt.client as mqtt
 
-from google_find_my_ha.Auth.fcm_receiver import FcmReceiver
-from google_find_my_ha.NovaApi.ExecuteAction.LocateTracker.decrypt_locations import (
+from google_find_my_ha.auth.fcm_receiver import FcmReceiver
+from google_find_my_ha.nova_api.execute_action.locate_tracker.decrypt_locations import (
     LocationData,
     SemanticData,
 )
-from google_find_my_ha.NovaApi.ExecuteAction.LocateTracker.location_request import (
+from google_find_my_ha.nova_api.execute_action.locate_tracker.location_request import (
     get_location_data_for_device,
 )
-from google_find_my_ha.NovaApi.ListDevices.nbe_list_devices import request_device_list
-from google_find_my_ha.ProtoDecoders.decoder import (
+from google_find_my_ha.nova_api.list_devices.nbe_list_devices import request_device_list
+from google_find_my_ha.proto_decoders.decoder import (
     get_canonic_ids,
     parse_device_list_protobuf,
 )
@@ -88,7 +88,7 @@ def publish_device_state(
     altitude = location_data.get("altitude", HOME_ALTITUDE if home else None)
     timestamp = location_data.get("timestamp", time.time())
 
-    state = "not_home" if lat is not None and lon is not None else semantic_location or "not_home"
+    state = "not_home" if lat is not None and lon is not None else str(semantic_location or "not_home")
     client.publish(f"{base_topic}/state", state)
 
     # Publish attributes

@@ -4,10 +4,10 @@ import sys
 
 import pytest
 
-from google_find_my_ha.KeyBackup import shared_key_request, shared_key_retrieval
-from google_find_my_ha.KeyBackup.lskf_hasher import ascii_to_bytes
-from google_find_my_ha.KeyBackup.response_parser import get_fmdn_shared_key
-from google_find_my_ha.ProtoDecoders import DeviceUpdate_pb2
+from google_find_my_ha.key_backup import shared_key_request, shared_key_retrieval
+from google_find_my_ha.key_backup.lskf_hasher import ascii_to_bytes
+from google_find_my_ha.key_backup.response_parser import get_fmdn_shared_key
+from google_find_my_ha.proto_decoders import device_update_pb2
 
 
 def test_security_domain_request_url_contains_expected_proto(monkeypatch):
@@ -16,7 +16,7 @@ def test_security_domain_request_url_contains_expected_proto(monkeypatch):
 
     assert url.startswith("https://accounts.google.com/encryption/unlock/android?kdi=")
     payload = base64.b64decode(url.split("kdi=", 1)[1])
-    extras = DeviceUpdate_pb2.EncryptionUnlockRequestExtras()
+    extras = device_update_pb2.EncryptionUnlockRequestExtras()
     extras.ParseFromString(payload)
     assert extras.operation == 1
     assert extras.securityDomain.name == "finder_hw"
@@ -42,7 +42,7 @@ def test_retrieve_shared_key_prompts_then_runs_flow(monkeypatch):
     monkeypatch.setattr("builtins.input", lambda prompt: "")
     monkeypatch.setitem(
         sys.modules,
-        "google_find_my_ha.KeyBackup.shared_key_flow",
+        "google_find_my_ha.key_backup.shared_key_flow",
         type("Flow", (), {"request_shared_key_flow": staticmethod(lambda: "abc")}),
     )
     assert shared_key_retrieval._retrieve_shared_key() == "abc"

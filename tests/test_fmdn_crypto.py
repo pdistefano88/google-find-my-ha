@@ -1,8 +1,8 @@
 import pytest
 from ecdsa import SECP160r1
 
-from google_find_my_ha.FMDNCrypto.eid_generator import generate_eid, get_masked_timestamp
-from google_find_my_ha.FMDNCrypto.foreign_tracker_cryptor import (
+from google_find_my_ha.fmdn_crypto.eid_generator import generate_eid, get_masked_timestamp
+from google_find_my_ha.fmdn_crypto.foreign_tracker_cryptor import (
     decrypt,
     decrypt_aes_eax,
     encrypt,

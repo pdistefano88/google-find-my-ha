@@ -1,22 +1,22 @@
 import datetime
 
-from google_find_my_ha.NovaApi.ExecuteAction.LocateTracker import decrypt_locations
-from google_find_my_ha.ProtoDecoders import Common_pb2, DeviceUpdate_pb2
+from google_find_my_ha.nova_api.execute_action.locate_tracker import decrypt_locations
+from google_find_my_ha.proto_decoders import common_pb2, device_update_pb2
 
 
 def make_update():
-    return DeviceUpdate_pb2.DeviceUpdate()
+    return device_update_pb2.DeviceUpdate()
 
 
 def test_is_mcu_tracker_checks_fast_pair_model_id():
-    registration = DeviceUpdate_pb2.DeviceRegistration(fastPairModelId=decrypt_locations.mcu_fast_pair_model_id)
+    registration = device_update_pb2.DeviceRegistration(fastPairModelId=decrypt_locations.mcu_fast_pair_model_id)
     assert decrypt_locations.is_mcu_tracker(registration) is True
     registration.fastPairModelId = "other"
     assert decrypt_locations.is_mcu_tracker(registration) is False
 
 
 def test_retrieve_identity_key_flips_mcu_data_and_decrypts(monkeypatch):
-    registration = DeviceUpdate_pb2.DeviceRegistration(fastPairModelId=decrypt_locations.mcu_fast_pair_model_id)
+    registration = device_update_pb2.DeviceRegistration(fastPairModelId=decrypt_locations.mcu_fast_pair_model_id)
     registration.encryptedUserSecrets.encryptedIdentityKey = b"\x00\xff"
     monkeypatch.setattr(decrypt_locations, "get_owner_key", lambda: b"owner")
     calls = []
@@ -35,7 +35,7 @@ def test_decrypt_locations_returns_semantic_data(monkeypatch):
     update = make_update()
     reports = update.deviceMetadata.information.locationInformation.reports.recentLocationAndNetworkLocations
     loc = reports.networkLocations.add()
-    loc.status = Common_pb2.Status.SEMANTIC
+    loc.status = common_pb2.Status.SEMANTIC
     loc.semanticLocation.locationName = "Home"
     reports.networkLocationTimestamps.add(seconds=1700000000)
     monkeypatch.setattr(decrypt_locations, "retrieve_identity_key", lambda registration: b"identity")
@@ -44,7 +44,7 @@ def test_decrypt_locations_returns_semantic_data(monkeypatch):
     assert result == {
         "semantic_location": "Home",
         "timestamp": datetime.datetime.fromtimestamp(1700000000).strftime("%Y-%m-%d %H:%M:%S"),
-        "status": Common_pb2.Status.SEMANTIC,
+        "status": common_pb2.Status.SEMANTIC,
         "is_own_report": True,
     }
 
@@ -53,12 +53,12 @@ def test_decrypt_locations_decrypts_own_geo_report(monkeypatch):
     update = make_update()
     reports = update.deviceMetadata.information.locationInformation.reports.recentLocationAndNetworkLocations
     loc = reports.networkLocations.add()
-    loc.status = Common_pb2.Status.LAST_KNOWN
+    loc.status = common_pb2.Status.LAST_KNOWN
     loc.geoLocation.accuracy = 3.5
     loc.geoLocation.encryptedReport.encryptedLocation = b"encrypted"
     loc.geoLocation.encryptedReport.isOwnReport = True
     reports.networkLocationTimestamps.add(seconds=1700000000)
-    decrypted = DeviceUpdate_pb2.Location(latitude=123456789, longitude=-987654321, altitude=42).SerializeToString()
+    decrypted = device_update_pb2.Location(latitude=123456789, longitude=-987654321, altitude=42).SerializeToString()
     monkeypatch.setattr(decrypt_locations, "retrieve_identity_key", lambda registration: b"identity")
     monkeypatch.setattr(decrypt_locations, "decrypt_aes_gcm", lambda key, data: decrypted)
 
@@ -74,12 +74,12 @@ def test_decrypt_locations_decrypts_foreign_report_with_time_offset(monkeypatch)
     update = make_update()
     reports = update.deviceMetadata.information.locationInformation.reports.recentLocationAndNetworkLocations
     loc = reports.networkLocations.add()
-    loc.status = Common_pb2.Status.CROWDSOURCED
+    loc.status = common_pb2.Status.CROWDSOURCED
     loc.geoLocation.deviceTimeOffset = 123
     loc.geoLocation.encryptedReport.encryptedLocation = b"encrypted"
     loc.geoLocation.encryptedReport.publicKeyRandom = b"random"
     reports.networkLocationTimestamps.add(seconds=1700000000)
-    decrypted = DeviceUpdate_pb2.Location(latitude=1, longitude=2, altitude=3).SerializeToString()
+    decrypted = device_update_pb2.Location(latitude=1, longitude=2, altitude=3).SerializeToString()
     calls = []
     monkeypatch.setattr(decrypt_locations, "retrieve_identity_key", lambda registration: b"identity")
     monkeypatch.setattr(decrypt_locations, "decrypt", lambda *args: calls.append(args) or decrypted)

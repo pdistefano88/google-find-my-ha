@@ -4,8 +4,8 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
-from google_find_my_ha.KeyBackup import cloud_key_decryptor
-from google_find_my_ha.KeyBackup.cloud_key_decryptor import (
+from google_find_my_ha.key_backup import cloud_key_decryptor
+from google_find_my_ha.key_backup.cloud_key_decryptor import (
     decrypt_aes_cbc_no_padding,
     decrypt_aes_gcm_with_derived_key,
     derive_key_using_hkdf_sha256,

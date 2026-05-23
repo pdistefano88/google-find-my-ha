@@ -15,25 +15,25 @@ def import_publish_mqtt(monkeypatch, reimport):
     monkeypatch.setitem(sys.modules, "paho.mqtt", types.SimpleNamespace(client=mqtt_module))
     monkeypatch.setitem(sys.modules, "paho.mqtt.client", mqtt_module)
 
-    monkeypatch.setitem(sys.modules, "google_find_my_ha.Auth.fcm_receiver", types.SimpleNamespace(FcmReceiver=lambda: None))
+    monkeypatch.setitem(sys.modules, "google_find_my_ha.auth.fcm_receiver", types.SimpleNamespace(FcmReceiver=lambda: None))
     monkeypatch.setitem(
         sys.modules,
-        "google_find_my_ha.NovaApi.ExecuteAction.LocateTracker.decrypt_locations",
+        "google_find_my_ha.nova_api.execute_action.locate_tracker.decrypt_locations",
         types.SimpleNamespace(LocationData=dict, SemanticData=dict),
     )
     monkeypatch.setitem(
         sys.modules,
-        "google_find_my_ha.NovaApi.ExecuteAction.LocateTracker.location_request",
+        "google_find_my_ha.nova_api.execute_action.locate_tracker.location_request",
         types.SimpleNamespace(get_location_data_for_device=lambda *args: None),
     )
     monkeypatch.setitem(
         sys.modules,
-        "google_find_my_ha.NovaApi.ListDevices.nbe_list_devices",
+        "google_find_my_ha.nova_api.list_devices.nbe_list_devices",
         types.SimpleNamespace(request_device_list=lambda: ""),
     )
     monkeypatch.setitem(
         sys.modules,
-        "google_find_my_ha.ProtoDecoders.decoder",
+        "google_find_my_ha.proto_decoders.decoder",
         types.SimpleNamespace(parse_device_list_protobuf=lambda payload: [], get_canonic_ids=lambda devices: []),
     )
     return reimport("publish_mqtt")

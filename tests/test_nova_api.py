@@ -3,10 +3,10 @@ import types
 
 import pytest
 
-from google_find_my_ha.NovaApi import nova_request, util
-from google_find_my_ha.NovaApi.ExecuteAction import nbe_execute_action
-from google_find_my_ha.NovaApi.ListDevices import nbe_list_devices
-from google_find_my_ha.ProtoDecoders import DeviceUpdate_pb2
+from google_find_my_ha.nova_api import nova_request, util
+from google_find_my_ha.nova_api.execute_action import nbe_execute_action
+from google_find_my_ha.nova_api.list_devices import nbe_list_devices
+from google_find_my_ha.proto_decoders import device_update_pb2
 
 
 def test_utilities(monkeypatch):
@@ -49,20 +49,20 @@ def test_nova_request_error_raises_text(monkeypatch):
 
 def test_create_action_request_and_serialization():
     request = nbe_execute_action.create_action_request("canonic", "gcm", request_uuid="req", fmd_client_uuid="client")
-    assert request.scope.type == DeviceUpdate_pb2.DeviceType.SPOT_DEVICE
+    assert request.scope.type == device_update_pb2.DeviceType.SPOT_DEVICE
     assert request.scope.device.canonicId.id == "canonic"
     assert request.requestMetadata.requestUuid == "req"
     assert request.requestMetadata.gcmRegistrationId.id == "gcm"
-    parsed = DeviceUpdate_pb2.ExecuteActionRequest()
+    parsed = device_update_pb2.ExecuteActionRequest()
     parsed.ParseFromString(binascii.unhexlify(nbe_execute_action.serialize_action_request(request)))
     assert parsed == request
 
 
 def test_create_device_list_request_sets_spot_type_and_uuid(monkeypatch):
     monkeypatch.setattr(nbe_list_devices, "generate_random_uuid", lambda: "uuid")
-    parsed = DeviceUpdate_pb2.DevicesListRequest()
+    parsed = device_update_pb2.DevicesListRequest()
     parsed.ParseFromString(bytes.fromhex(nbe_list_devices.create_device_list_request()))
-    assert parsed.deviceListRequestPayload.type == DeviceUpdate_pb2.DeviceType.SPOT_DEVICE
+    assert parsed.deviceListRequestPayload.type == device_update_pb2.DeviceType.SPOT_DEVICE
     assert parsed.deviceListRequestPayload.id == "uuid"
 
 

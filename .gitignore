@@ -191,3 +191,4 @@ secrets.json
 
 lazygit*
 *egg-info*
+uv.lock

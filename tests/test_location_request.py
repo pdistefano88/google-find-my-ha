@@ -1,17 +1,16 @@
-import asyncio
 import types
 
 import pytest
 
-from google_find_my_ha.NovaApi.ExecuteAction.LocateTracker import location_request
-from google_find_my_ha.ProtoDecoders import DeviceUpdate_pb2
+from google_find_my_ha.nova_api.execute_action.locate_tracker import location_request
+from google_find_my_ha.proto_decoders import device_update_pb2
 
 
 def test_create_location_request_sets_locate_tracker_fields():
-    parsed = DeviceUpdate_pb2.ExecuteActionRequest()
+    parsed = device_update_pb2.ExecuteActionRequest()
     parsed.ParseFromString(bytes.fromhex(location_request.create_location_request("canonic", "fcm", "req")))
     assert parsed.action.locateTracker.lastHighTrafficEnablingTime.seconds == 1732120060
-    assert parsed.action.locateTracker.contributorType == DeviceUpdate_pb2.SpotContributorType.FMDN_ALL_LOCATIONS
+    assert parsed.action.locateTracker.contributorType == device_update_pb2.SpotContributorType.FMDN_ALL_LOCATIONS
     assert parsed.requestMetadata.requestUuid == "req"
 
 

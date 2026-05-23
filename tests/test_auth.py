@@ -1,13 +1,12 @@
 import asyncio
 import base64
-import importlib
 import json
 import sys
 import types
 
 import pytest
 
-from google_find_my_ha.Auth import (
+from google_find_my_ha.auth import (
     aas_token_retrieval,
     adm_token_retrieval,
     spot_token_retrieval,
@@ -65,7 +64,7 @@ def test_token_retrieval_uses_scope_app_and_android_id(monkeypatch):
 
 def test_aas_token_generation_caches_returned_email(monkeypatch):
     auth_flow = types.SimpleNamespace(request_oauth_account_token_flow=lambda: "account-token")
-    monkeypatch.setitem(sys.modules, "google_find_my_ha.Auth.auth_flow", auth_flow)
+    monkeypatch.setitem(sys.modules, "google_find_my_ha.auth.auth_flow", auth_flow)
     monkeypatch.setattr(aas_token_retrieval, "get_username", lambda: "old@example.com")
     monkeypatch.setattr(aas_token_retrieval, "FcmReceiver", lambda: types.SimpleNamespace(get_android_id=lambda: "android"))
     monkeypatch.setattr(
@@ -102,10 +101,10 @@ def test_adm_and_spot_tokens_delegate_with_expected_scopes(monkeypatch):
 def test_fcm_receiver_handles_credentials_callbacks_and_payload(
     monkeypatch, reimport, fake_firebase_module
 ):
-    monkeypatch.setattr("google_find_my_ha.Auth.token_cache.get_cached_value", lambda name: None)
+    monkeypatch.setattr("google_find_my_ha.auth.token_cache.get_cached_value", lambda name: None)
     cached = []
-    monkeypatch.setattr("google_find_my_ha.Auth.token_cache.set_cached_value", lambda name, value: cached.append((name, value)))
-    module = reimport("google_find_my_ha.Auth.fcm_receiver")
+    monkeypatch.setattr("google_find_my_ha.auth.token_cache.set_cached_value", lambda name, value: cached.append((name, value)))
+    module = reimport("google_find_my_ha.auth.fcm_receiver")
     module.FcmReceiver._instance = None
     receiver = module.FcmReceiver()
     seen = []
@@ -124,8 +123,8 @@ def test_fcm_receiver_handles_credentials_callbacks_and_payload(
 
 
 def test_fcm_receiver_register_stop_and_android_id(monkeypatch, reimport, fake_firebase_module):
-    monkeypatch.setattr("google_find_my_ha.Auth.token_cache.get_cached_value", lambda name: {"gcm": {"android_id": "android"}, "fcm": {"registration": {"token": "token"}}})
-    module = reimport("google_find_my_ha.Auth.fcm_receiver")
+    monkeypatch.setattr("google_find_my_ha.auth.token_cache.get_cached_value", lambda name: {"gcm": {"android_id": "android"}, "fcm": {"registration": {"token": "token"}}})
+    module = reimport("google_find_my_ha.auth.fcm_receiver")
     module.FcmReceiver._instance = None
     receiver = module.FcmReceiver()
 
@@ -138,8 +137,8 @@ def test_fcm_receiver_register_stop_and_android_id(monkeypatch, reimport, fake_f
 
 
 def test_fcm_timeout_handler_stops_listener(monkeypatch, reimport, fake_firebase_module):
-    monkeypatch.setattr("google_find_my_ha.Auth.token_cache.get_cached_value", lambda name: None)
-    module = reimport("google_find_my_ha.Auth.fcm_receiver")
+    monkeypatch.setattr("google_find_my_ha.auth.token_cache.get_cached_value", lambda name: None)
+    module = reimport("google_find_my_ha.auth.fcm_receiver")
     module.FcmReceiver._instance = None
     receiver = module.FcmReceiver()
     receiver._listening = True
