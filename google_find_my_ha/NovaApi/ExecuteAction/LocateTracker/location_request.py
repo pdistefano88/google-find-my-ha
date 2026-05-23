@@ -8,7 +8,11 @@ import time
 import logging
 
 from google_find_my_ha.Auth.fcm_receiver import FcmReceiver
-from google_find_my_ha.NovaApi.ExecuteAction.LocateTracker.decrypt_locations import decrypt_location_response_locations, LocationData
+from google_find_my_ha.NovaApi.ExecuteAction.LocateTracker.decrypt_locations import (
+    LocationData,
+    SemanticData,
+    decrypt_location_response_locations,
+)
 from google_find_my_ha.NovaApi.ExecuteAction.nbe_execute_action import create_action_request, serialize_action_request
 from google_find_my_ha.NovaApi.nova_request import nova_request
 from google_find_my_ha.NovaApi.scopes import NOVA_ACTION_API_SCOPE
@@ -35,11 +39,14 @@ def create_location_request(canonic_device_id: str,
     return hex_payload
 
 
-def get_location_data_for_device(canonic_device_id: str, name: str) -> LocationData:
+def get_location_data_for_device(
+    canonic_device_id: str, name: str
+) -> LocationData | SemanticData | None:
     logger.debug(f"[LocationRequest] Requesting location data for {name}...")
 
     result = None
     request_uuid = generate_random_uuid()
+    deadline = time.monotonic() + TIMEOUT
 
     def handle_location_response(response):
         nonlocal result
@@ -51,16 +58,21 @@ def get_location_data_for_device(canonic_device_id: str, name: str) -> LocationD
 
     receiver = FcmReceiver()
 
-    fcm_token = FcmReceiver().register_for_location_updates(handle_location_response)
+    try:
+        fcm_token = receiver.register_for_location_updates(
+            handle_location_response, timeout_seconds=TIMEOUT
+        )
 
-    hex_payload = create_location_request(canonic_device_id, fcm_token, request_uuid)
-    nova_request(NOVA_ACTION_API_SCOPE, hex_payload)
+        hex_payload = create_location_request(canonic_device_id, fcm_token, request_uuid)
+        nova_request(NOVA_ACTION_API_SCOPE, hex_payload)
 
-    while (result is None) and receiver.listening:
-        asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
+        while result is None and time.monotonic() < deadline:
+            asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
 
-    if result is None:
-        raise TimeoutError("The FCM server timed out.")
+        if result is None:
+            raise TimeoutError(f"Timed out waiting for location data for {name}.")
 
-    locations = decrypt_location_response_locations(result)
-    return locations
+        locations = decrypt_location_response_locations(result)
+        return locations
+    finally:
+        receiver.unregister_location_update_callback(handle_location_response)

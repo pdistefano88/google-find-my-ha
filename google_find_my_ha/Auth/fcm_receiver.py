@@ -60,6 +60,10 @@ class FcmReceiver:
             )
         return self.credentials["fcm"]["registration"]["token"]
 
+    def unregister_location_update_callback(self, callback):
+        if callback in self.location_update_callbacks:
+            self.location_update_callbacks.remove(callback)
+
     def stop_listening(self):
         if self.timeout_task and not self.timeout_task.done():
             self.timeout_task.cancel()
@@ -86,7 +90,7 @@ class FcmReceiver:
             decoded_bytes = base64.b64decode(base64_string)
             # Convert to hex string
             hex_string = binascii.hexlify(decoded_bytes).decode("utf-8")
-            for callback in self.location_update_callbacks:
+            for callback in list(self.location_update_callbacks):
                 callback(hex_string)
         else:
             logger.error("[FCMReceiver] Payload not found in the notification.")
@@ -150,4 +154,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Stopping...")
         receiver.stop_listening()
-

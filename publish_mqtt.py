@@ -134,10 +134,20 @@ def main():
                     location_data = get_location_data_for_device(
                         canonic_id, device_name
                     )
+                    if location_data is None:
+                        logger.info(
+                            f"No location data available for {device_name}; keeping previous MQTT state"
+                        )
+                        continue
+
                     msg_info = publish_device_state(client, canonic_id, location_data)
                     msg_info.wait_for_publish()
 
                     logger.info(f"Published data for {device_name}")
+                except TimeoutError as e:
+                    logger.warning(
+                        f"No location response for {device_name}: {e}. Keeping previous MQTT state"
+                    )
                 except Exception as e:
                     logger.exception(
                         f"Failed to retrieve data for device {device_name}. Error: {e}"

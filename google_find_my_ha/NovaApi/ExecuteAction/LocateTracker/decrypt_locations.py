@@ -82,7 +82,7 @@ def retrieve_identity_key(device_registration: DeviceRegistration) -> bytes:
 
 def decrypt_location_response_locations(
     device_update_protobuf: DeviceUpdate_pb2.DeviceUpdate,
-) -> LocationData | SemanticData:
+) -> LocationData | SemanticData | None:
     device_registration = (
         device_update_protobuf.deviceMetadata.information.deviceRegistration
     )
